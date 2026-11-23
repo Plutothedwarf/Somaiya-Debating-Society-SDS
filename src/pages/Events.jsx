@@ -1,13 +1,6 @@
 import { useEffect } from 'react';
 import { events } from '../data/events';
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
+import { OrnamentRule } from '../components/Ornaments';
 
 function EventCard({ event, muted }) {
   return (
@@ -16,12 +9,28 @@ function EventCard({ event, muted }) {
         borderTop: '1px solid var(--color-rule)',
         paddingTop: '1.75rem',
         paddingBottom: '1.75rem',
-        opacity: muted ? 0.72 : 1,
+        opacity: muted ? 0.68 : 1,
+        position: 'relative',
       }}
       aria-label={`${event.name}, ${event.dateLabel}`}
     >
+      {/* Left accent bar for upcoming events */}
+      {!muted && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: '-1.5rem',
+            top: '1.75rem',
+            bottom: '1.75rem',
+            width: '3px',
+            backgroundColor: 'var(--color-oxblood)',
+          }}
+        />
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '5rem 1fr', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Event ID in rail position */}
+        {/* Event ID */}
         <div>
           <p className="motion-num">{event.id}</p>
           <p className="rail-label" style={{ color: 'var(--color-chalk)', marginTop: '0.5rem', lineHeight: 1.4 }}>
@@ -38,19 +47,15 @@ function EventCard({ event, muted }) {
               letterSpacing: '-0.02em',
               marginBottom: '0.35rem',
               color: muted ? 'var(--color-chalk)' : 'var(--color-ink)',
+              fontWeight: 600,
             }}
           >
             {event.name}
           </h3>
 
-          {/* Date + venue */}
           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-            <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>
-              {event.dateLabel}
-            </p>
-            <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>
-              {event.venue}
-            </p>
+            <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>{event.dateLabel}</p>
+            <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>{event.venue}</p>
           </div>
 
           <p
@@ -66,7 +71,6 @@ function EventCard({ event, muted }) {
             {event.description}
           </p>
 
-          {/* Action */}
           {event.status === 'upcoming' && (
             <a
               href={event.registerUrl}
@@ -121,7 +125,7 @@ export default function Events() {
           <div className="op-layout">
             <aside className="op-rail">
               <p className="rail-label">Page</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>Events</p>
+              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem', fontWeight: 600 }}>Events</p>
             </aside>
             <div className="op-main">
               <h1>Events</h1>
@@ -129,6 +133,8 @@ export default function Events() {
           </div>
         </div>
       </section>
+
+      <OrnamentRule motif="gavel" color="var(--color-rule)" style={{ padding: '0.5rem 0' }} />
 
       {/* Upcoming events */}
       <section style={{ paddingTop: '3rem', paddingBottom: '3rem', borderBottom: '1px solid var(--color-rule)' }}>
@@ -152,9 +158,11 @@ export default function Events() {
                 <div
                   style={{
                     border: '1px solid var(--color-rule)',
+                    borderTop: '3px solid var(--color-oxblood)',
                     padding: '2.5rem',
                     marginTop: '1.5rem',
                     textAlign: 'center',
+                    backgroundColor: 'var(--color-cream)',
                   }}
                 >
                   <p
@@ -172,7 +180,7 @@ export default function Events() {
                   </p>
                 </div>
               ) : (
-                <div>
+                <div style={{ position: 'relative', paddingLeft: '1.5rem' }}>
                   {upcoming.map(e => <EventCard key={e.id} event={e} muted={false} />)}
                 </div>
               )}
@@ -183,29 +191,32 @@ export default function Events() {
 
       {/* Past events */}
       {past.length > 0 && (
-        <section style={{ paddingTop: '3rem', paddingBottom: '5rem' }}>
-          <div className="container">
-            <div className="op-layout">
-              <aside className="op-rail">
-                <p className="rail-label">Past</p>
-                <p className="rail-label" style={{ color: 'var(--color-chalk)', marginTop: '0.25rem' }}>
-                  {past.length} events
-                </p>
-              </aside>
-              <div className="op-main">
-                <div className="section-marker" style={{ marginTop: '0.5rem' }}>
-                  <span>Past events</span>
-                </div>
-                <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', marginBottom: '0.5rem' }}>
-                  Past events
-                </h2>
-                <div>
-                  {past.map(e => <EventCard key={e.id} event={e} muted={true} />)}
+        <>
+          <OrnamentRule motif="scroll" color="var(--color-rule)" style={{ padding: '0.5rem 0' }} />
+          <section style={{ paddingTop: '3rem', paddingBottom: '5rem', backgroundColor: 'var(--color-cream)' }}>
+            <div className="container">
+              <div className="op-layout">
+                <aside className="op-rail">
+                  <p className="rail-label">Past</p>
+                  <p className="rail-label" style={{ color: 'var(--color-chalk)', marginTop: '0.25rem' }}>
+                    {past.length} events
+                  </p>
+                </aside>
+                <div className="op-main">
+                  <div className="section-marker" style={{ marginTop: '0.5rem' }}>
+                    <span>Past events</span>
+                  </div>
+                  <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)', marginBottom: '0.5rem' }}>
+                    Past events
+                  </h2>
+                  <div>
+                    {past.map(e => <EventCard key={e.id} event={e} muted={true} />)}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </>
       )}
     </>
   );

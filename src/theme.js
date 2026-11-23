@@ -1,5 +1,5 @@
 // Central theme config — reference these values in JS where needed.
-// All actual styling uses the CSS variables in index.css or Tailwind tokens.
+// All actual styling uses the CSS variables in index.css.
 
 export const SITE = {
   name: 'Somaiya Debating Society',
@@ -7,14 +7,14 @@ export const SITE = {
   established: 2020,
   session: new Date().getFullYear(),
   tagline: 'A community of thinkers, speakers, and competitors dedicated to the art and discipline of formal debate.',
-  email: 'debate@somaiya.edu',
+  email: 'debsoc@somaiya.edu',
   phone: '+91 98765 43210',
   location: 'K.J. Somaiya College of Engineering, Vidyavihar, Mumbai 400077',
   instagram: 'https://instagram.com/somaiya.debate',
   linkedin: 'https://linkedin.com/company/somaiya-debating-society',
   whatsapp: 'https://chat.whatsapp.com/placeholder',
   joinFormUrl: 'https://forms.google.com/placeholder',
-  contactFormEmail: 'debate@somaiya.edu',
+  contactFormEmail: 'debsoc@somaiya.edu',
 };
 
 export const STATS = [
@@ -24,12 +24,12 @@ export const STATS = [
   { value: '12',   label: 'Awards Won',     numericEnd: 12 },
 ];
 
-// Delegate Glass — tier-to-accent CSS variable map
+// Marginalia — tier-to-accent CSS variable map (committee accent reassignment)
 export const TIER_ACCENTS = {
-  leadership: { var: '--color-gold',   label: 'Council' },
-  debate:     { var: '--color-red',    label: 'Executive Team' },
-  creatives:  { var: '--color-violet', label: 'Creatives' },
-  pr:         { var: '--color-teal',   label: 'PR and Marketing' },
-  logistics:  { var: '--color-cobalt', label: 'Logistics' },
-  mentors:    { var: '--color-gold',   label: 'Mentors' },
+  leadership: { var: '--color-brass',   label: 'Council',          bg: 'rgba(184,134,11,0.09)',  border: 'rgba(184,134,11,0.25)' },
+  debate:     { var: '--color-oxblood', label: 'Executive Team',   bg: 'rgba(110,20,35,0.07)',   border: 'rgba(110,20,35,0.2)' },
+  creatives:  { var: '--color-rose',    label: 'Creatives',        bg: 'rgba(122,92,110,0.07)',  border: 'rgba(122,92,110,0.2)' },
+  pr:         { var: '--color-brass',   label: 'PR and Marketing', bg: 'rgba(184,134,11,0.07)',  border: 'rgba(184,134,11,0.2)' },
+  logistics:  { var: '--color-teal',    label: 'Logistics',        bg: 'rgba(27,77,77,0.07)',    border: 'rgba(27,77,77,0.2)' },
+  mentors:    { var: '--color-sage',    label: 'Mentors',          bg: 'rgba(91,110,77,0.07)',   border: 'rgba(91,110,77,0.2)' },
 };

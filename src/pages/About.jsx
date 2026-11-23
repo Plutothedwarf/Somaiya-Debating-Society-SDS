@@ -1,277 +1,260 @@
 import { useEffect } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const milestones = [
-  { year: 2020, text: 'Somaiya Debating Society founded by a group of eight students passionate about competitive debate.' },
-  { year: 2021, text: 'First edition of Somaiya Invitational held, with 12 teams participating from colleges across Mumbai.' },
-  { year: 2022, text: 'SDS members qualify for the Maharashtra State Debate Championship for the first time.' },
-  { year: 2023, text: 'Membership grows to over 80 active members. Society introduces dedicated training workshops for new members.' },
-  { year: 2024, text: 'SDS wins Best New Society at the Mumbai Inter-Collegiate Debate Council awards. Invitational expands to 30 teams.' },
-  { year: 2025, text: 'Society affiliates with the All India Debate Association. First members selected for national-level representation.' },
+  { year: '2020', text: 'Founded by eight passionate students in a college seminar room.' },
+  { year: '2021', text: 'First Somaiya Invitational held - 12 teams, one unforgettable weekend.' },
+  { year: '2022', text: 'SDS qualifies for the Maharashtra State Debate Championship.' },
+  { year: '2023', text: 'Membership grows to 80+ active members. Dedicated training workshops launched.' },
+  { year: '2024', text: 'Best New Society at Mumbai Inter-Collegiate Debate Council. Invitational expands to 30 teams.' },
+  { year: '2025', text: 'Affiliated with All India Debate Association. First national-level representatives.' },
 ];
 
 const values = [
-  {
-    label: 'Rigorous argument',
-    text: 'We believe in the discipline of building and testing ideas through structured, evidence-based reasoning.',
-  },
-  {
-    label: 'Inclusive participation',
-    text: 'Every member is given space to develop, regardless of background or prior experience in debate.',
-  },
-  {
-    label: 'Intellectual honesty',
-    text: 'We hold ourselves to speaking truthfully, crediting sources, and engaging opponents\' arguments on their merits.',
-  },
-  {
-    label: 'Community over competition',
-    text: 'Debate is a competitive discipline, but our strongest priority is building lasting friendships and a culture of mutual growth.',
-  },
+  { label: 'Rigorous Argument', text: 'We build and test ideas through structured, evidence-based reasoning. No weak takes allowed.', icon: '', color: 'var(--crimson)' },
+  { label: 'Inclusive Space', text: 'Every voice matters here, regardless of experience or background. We start from zero together.', icon: '', color: 'var(--saffron)' },
 ];
 
 export default function About() {
-  useEffect(() => { document.title = 'About \u2014 Somaiya Debating Society'; }, []);
+  useEffect(() => { document.title = 'About - Somaiya Debating Society'; }, []);
+  const { scrollYProgress } = useScroll();
+
+  const ySlow = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const yFast = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const yReverse = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const rotateScroll = useTransform(scrollYProgress, [0, 1], [0, 30]);
 
   return (
     <>
-      {/* Page header */}
-      <section
-        style={{ paddingTop: '3.5rem', paddingBottom: '3rem', borderBottom: '1px solid var(--color-rule)' }}
-      >
-        <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail">
-              <p className="rail-label">Page</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>About</p>
-            </aside>
-            <div className="op-main">
-              <h1>About the Society</h1>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── HERO HEADER ──────────────────────────────────────── */}
+      <section style={{
+        background: 'var(--crimson-dark)', paddingTop: '8rem', paddingBottom: '8rem',
+        position: 'relative', overflow: 'hidden', borderBottom: '8px solid var(--saffron)'
+      }} className="bg-dense-pattern">
+        
+        {/* Parallax background elements */}
+        <motion.div aria-hidden="true" style={{
+          position: 'absolute', left: '-60px', top: '10%', width: '400px', height: '600px',
+          backgroundImage: 'url(/images/indian_peacock_vintage.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.6, rotate: 15, y: ySlow
+        }} />
+        <motion.div className="bg-tile" aria-hidden="true" style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0, width: '250px',
+          opacity: 0.8, borderLeft: '6px solid var(--gold)', y: yFast
+        }} />
 
-      {/* History */}
-      <section style={{ paddingTop: '4rem', paddingBottom: '4rem', borderBottom: '1px solid var(--color-rule)' }}>
-        <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail">
-              <p className="rail-label">Section 1</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>Our History</p>
-            </aside>
-            <div className="op-main">
-              <div className="section-marker">
-                <span>Our history</span>
-              </div>
-              <h2 style={{ marginBottom: '1.5rem' }}>Where we began</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <p style={{ fontFamily: 'var(--font-sans)', lineHeight: 1.75, color: 'var(--color-chalk)' }}>
-                  Somaiya Debating Society was founded in 2020 by eight students who shared a conviction that competitive debate had transformative power — not just as a co-curricular activity, but as a discipline for life. What began as informal practice sessions in a college seminar room grew quickly into a structured society with a training programme, a dedicated membership, and an annual flagship tournament.
-                </p>
-                <p style={{ fontFamily: 'var(--font-sans)', lineHeight: 1.75, color: 'var(--color-chalk)' }}>
-                  In our first full academic year, we fielded teams at regional tournaments, introduced three debate formats — British Parliamentary, Asian Parliamentary, and WSDC — and ran our first internal training workshop series. The response from students across departments exceeded our expectations.
-                </p>
-                <p style={{ fontFamily: 'var(--font-sans)', lineHeight: 1.75, color: 'var(--color-chalk)' }}>
-                  Today, Somaiya Debating Society counts over 150 active members, has sent teams to tournaments across Maharashtra, and hosts one of Mumbai's most competitive open invitational tournaments each October. We remain committed to the same principle that started it all: that a good argument, clearly made, changes minds.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <motion.div style={{
+            display: 'inline-flex', background: 'var(--gold)', color: 'var(--ink)',
+            fontFamily: 'var(--font-masthead)', fontSize: '1.25rem', padding: '0.4rem 1.5rem', marginBottom: '2rem',
+            border: '3px solid var(--ink)', boxShadow: '4px 4px 0 var(--ink)', rotate: -3, y: yReverse
+          }}>
+            ✦ ABOUT US
+          </motion.div>
 
-      {/* =====================================================
-          PULL-QUOTE — dark Ink section, Fraunces italic, Brass
-          ===================================================== */}
-      <section
-        className="section-dark"
-        style={{ paddingTop: '4.5rem', paddingBottom: '4.5rem' }}
-        aria-label="Pull quote"
-      >
-        <div className="container">
-          <div style={{ maxWidth: '48ch', margin: '0 auto', textAlign: 'center' }}>
-            <p
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontStyle: 'italic',
-                fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
-                lineHeight: 1.35,
-                letterSpacing: '-0.02em',
-                color: 'var(--color-brass)',
-                margin: 0,
-                fontWeight: 300,
-              }}
-            >
-              A good argument, clearly made, changes minds. That is the conviction this society was built on.
+          <motion.h1 style={{
+            fontFamily: 'var(--font-masthead)', fontSize: 'clamp(4rem, 10vw, 8rem)',
+            color: 'var(--parchment)', lineHeight: 0.9, marginBottom: '2rem', textShadow: '6px 6px 0 var(--ink)', y: ySlow
+          }}>
+            ABOUT THE<br />
+            <span style={{ color: 'var(--saffron)' }}>SOCIETY</span>
+          </motion.h1>
+
+          <motion.div style={{
+            background: 'var(--ink)', padding: '2rem', border: '4px solid var(--parchment)',
+            maxWidth: '600px', boxShadow: '8px 8px 0 var(--gold)', rotate: 2, y: yFast
+          }}>
+            <p style={{
+              fontFamily: 'var(--font-sans)', fontSize: '1.25rem', color: 'var(--parchment)', margin: 0, lineHeight: 1.6, fontWeight: 700
+            }}>
+              A society built on the belief that a good argument, clearly made, changes minds, and sometimes, the world.
             </p>
-            <div
-              aria-hidden="true"
-              style={{
-                width: '32px',
-                height: '2.5px',
-                backgroundColor: 'var(--color-brass)',
-                margin: '2rem auto 0',
-                opacity: 0.5,
-              }}
-            />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── STORY + COLLAGE ──────────────────────────────────── */}
+      <section style={{
+        paddingTop: '8rem', paddingBottom: '8rem', overflow: 'hidden', position: 'relative',
+      }} className="section-paper">
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'center',
+          }} className="about-story-grid">
+
+            {/* Collage column */}
+            <motion.div style={{ position: 'relative', height: '550px', y: ySlow }} aria-hidden="true">
+              <div style={{
+                position: 'absolute', top: '20px', left: 0, width: '75%', height: '400px',
+                transform: 'rotate(-4deg)', border: '6px solid var(--ink)',
+                boxShadow: '12px 12px 0 var(--saffron), 20px 20px 40px rgba(0,0,0,0.4)',
+                overflow: 'hidden', background: 'var(--crimson)'
+              }}>
+                <img src="/images/vintage_hindi_newspaper.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <motion.div style={{
+                position: 'absolute', bottom: 0, right: 0, width: '60%', height: '300px',
+                transform: 'rotate(6deg)', border: '6px solid var(--ink)',
+                boxShadow: '10px 10px 0 var(--crimson)', overflow: 'hidden', y: yFast
+              }}>
+                <img src="/images/hero_stamp.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </motion.div>
+              <motion.div style={{
+                position: 'absolute', top: '40%', left: '45%', background: 'var(--gold)', color: 'var(--ink)',
+                fontFamily: 'var(--font-masthead)', fontSize: '1.5rem', padding: '0.5rem 1.5rem', transform: 'rotate(-10deg)',
+                border: '3px solid var(--ink)', boxShadow: '6px 6px 0 var(--crimson)', whiteSpace: 'nowrap', zIndex: 10, y: yReverse
+              }}>
+                EST. 2020
+              </motion.div>
+            </motion.div>
+
+            {/* Text column */}
+            <motion.div style={{ y: yReverse }}>
+              <h2 style={{
+                fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 6vw, 5rem)',
+                color: 'var(--ink)', marginBottom: '2rem', lineHeight: 0.9, textShadow: '3px 3px 0 var(--parchment)'
+              }}>
+                WHERE WE BEGAN
+              </h2>
+              <div style={{
+                background: 'var(--ink)', color: 'var(--parchment)', padding: '2rem', border: '4px solid var(--crimson)',
+                boxShadow: '8px 8px 0 var(--gold)', transform: 'rotate(-1deg)'
+              }}>
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  Somaiya Debating Society was founded in 2020 by eight students who believed competitive debate had transformative power.
+                </p>
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  What began as informal practice sessions in a college seminar room grew into a structured society with a training programme, dedicated membership, and an annual flagship tournament.
+                </p>
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '1.1rem', lineHeight: 1.6, margin: 0, color: 'var(--saffron)' }}>
+                  Today, SDS counts over 150 active members, sends teams to tournaments across Maharashtra, and hosts one of Mumbai's most competitive open invitationals.
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Mission and values */}
-      <section style={{ paddingTop: '4rem', paddingBottom: '4rem', borderBottom: '1px solid var(--color-rule)' }}>
+      {/* ── PULL QUOTE — full pattern ────────────────────────── */}
+      <section style={{
+        background: 'var(--crimson)', padding: '6rem 2rem', position: 'relative', overflow: 'hidden', textAlign: 'center',
+        borderTop: '8px solid var(--ink)', borderBottom: '8px solid var(--ink)'
+      }} className="bg-dense-pattern">
+        
+        <motion.div style={{
+          position: 'absolute', right: '-10%', top: '-20%', width: '500px', height: '500px',
+          backgroundImage: 'url(/images/vintage_gramophone.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.5, rotate: rotateScroll
+        }} />
+
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <motion.div style={{
+            background: 'var(--parchment)', border: '6px solid var(--gold)', padding: '4rem 2rem', maxWidth: '900px', margin: '0 auto',
+            boxShadow: '15px 15px 0 var(--ink)', rotate: -2, y: ySlow
+          }}>
+            <p style={{ fontFamily: 'var(--font-masthead)', fontSize: '2rem', color: 'var(--crimson)', marginBottom: '1rem' }}>✦ ✦ ✦</p>
+            <blockquote style={{
+              fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 900,
+              fontSize: 'clamp(2rem, 4vw, 3.5rem)', lineHeight: 1.2, color: 'var(--ink)', margin: '0 auto 1.5rem',
+            }}>
+              "A good argument, clearly made, changes minds."
+            </blockquote>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── VALUES — maximalist cards ────────────────────────── */}
+      <section style={{
+        paddingTop: '8rem', paddingBottom: '8rem', position: 'relative', overflow: 'hidden',
+      }} className="section-paper">
         <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail">
-              <p className="rail-label">Section 2</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>Mission</p>
-            </aside>
-            <div className="op-main">
-              <div className="section-marker--gold section-marker">
-                <span>Mission and values</span>
-              </div>
-              <h2 style={{ marginBottom: '0.75rem' }}>Mission and values</h2>
-              <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-chalk)', marginBottom: '2.5rem', lineHeight: 1.7 }}>
-                Our mission is to create a space where students develop the skills and habits of mind that formal debate demands — critical thinking, clear communication, and the confidence to stand and be challenged.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                {values.map(({ label, text }, i, arr) => (
-                  <div key={label}>
-                    <div style={{ padding: '1.4rem 0', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                      <div
-                        style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--color-red)',
-                          marginTop: '0.55rem',
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', letterSpacing: '-0.02em', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>
-                          {label}
-                        </p>
-                        <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-chalk)', margin: 0, lineHeight: 1.65 }}>
-                          {text}
-                        </p>
-                      </div>
-                    </div>
-                    {i < arr.length - 1 && <hr className="rule" style={{ margin: 0 }} />}
-                  </div>
-                ))}
-              </div>
-            </div>
+          <motion.div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <h2 style={{
+              fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 7vw, 6rem)',
+              color: 'var(--ink)', textShadow: '4px 4px 0 var(--parchment)'
+            }}>
+              WHAT WE STAND FOR
+            </h2>
+          </motion.div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '3rem' }} className="values-grid">
+            {values.map(({ label, text, icon, color }, i) => (
+              <motion.div key={label} style={{
+                background: 'var(--ink)', border: `4px solid ${color}`, padding: '2.5rem', position: 'relative',
+                boxShadow: `10px 10px 0 ${color}`, rotate: i % 2 === 0 ? 2 : -2
+              }}>
+                {icon && <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>{icon}</span>}
+                <h3 style={{
+                  fontFamily: 'var(--font-masthead)', fontSize: '2rem',
+                  color: 'var(--parchment)', marginBottom: '1rem', letterSpacing: '0.05em'
+                }}>{label}</h3>
+                <p style={{ fontFamily: 'var(--font-sans)', color: color, fontSize: '1.1rem', margin: 0, fontWeight: 600 }}>{text}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Affiliations */}
-      <section style={{ paddingTop: '4rem', paddingBottom: '4rem', borderBottom: '1px solid var(--color-rule)' }}>
-        <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail">
-              <p className="rail-label">Section 3</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>Affiliations</p>
-            </aside>
-            <div className="op-main">
-              <div className="section-marker--brass section-marker">
-                <span>Affiliations</span>
-              </div>
-              <h2 style={{ marginBottom: '1.75rem' }}>Affiliations</h2>
-              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                {[
-                  { name: 'K.J. Somaiya College of Engineering', sub: 'Parent institution' },
-                  { name: 'Somaiya Vidyavihar University', sub: 'University body' },
-                  { name: 'All India Debate Association', sub: 'National body' },
-                  { name: 'Mumbai Inter-Collegiate Debate Council', sub: 'City body' },
-                ].map(({ name, sub }) => (
-                  <div
-                    key={name}
-                    style={{
-                      border: '1px solid var(--color-rule)',
-                      padding: '1.25rem 1.5rem',
-                      minWidth: '200px',
-                      flex: '1 1 200px',
-                      maxWidth: '280px',
-                    }}
-                  >
-                    <p style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-ink)', margin: '0 0 0.25rem 0' }}>{name}</p>
-                    <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>{sub}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* ── TIMELINE — vertical scrapbook ───────────────────── */}
+      <section style={{
+        background: 'var(--ink)', paddingTop: '8rem', paddingBottom: '8rem',
+        position: 'relative', overflow: 'hidden', borderTop: '8px solid var(--saffron)',
+      }} className="bg-dense-pattern">
+        
+        <motion.div style={{
+          position: 'absolute', left: '-50px', bottom: '0', width: '350px', height: '600px',
+          backgroundImage: 'url(/images/lotus_element.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.7, transform: 'scaleX(-1)', y: yReverse
+        }} />
+
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <motion.h2 style={{
+            textAlign: 'center', fontFamily: 'var(--font-masthead)', fontSize: 'clamp(4rem, 8vw, 6rem)',
+            color: 'var(--parchment)', marginBottom: '5rem', textShadow: '4px 4px 0 var(--crimson)', y: ySlow
+          }}>MILESTONES</motion.h2>
+
+          <div style={{ maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
+            {/* Vertical line */}
+            <div style={{
+              position: 'absolute', left: '100px', top: 0, bottom: 0, width: '6px',
+              background: 'var(--saffron)', border: '2px solid var(--ink)'
+            }} />
+
+            {milestones.map(({ year, text }, i) => (
+              <motion.div key={year} style={{
+                display: 'flex', gap: '3rem', alignItems: 'flex-start', marginBottom: '4rem', position: 'relative',
+              }}>
+                {/* Year stamp */}
+                <div style={{ flexShrink: 0, width: '100px', textAlign: 'right', paddingTop: '1rem' }}>
+                  <span style={{
+                    background: 'var(--gold)', color: 'var(--ink)', fontFamily: 'var(--font-masthead)',
+                    fontSize: '1.5rem', padding: '0.4rem 0.8rem', border: '3px solid var(--ink)',
+                    boxShadow: '4px 4px 0 var(--crimson)', transform: 'rotate(-4deg)', display: 'inline-block'
+                  }}>{year}</span>
+                </div>
+
+                {/* Content card */}
+                <div style={{
+                  flex: 1, background: 'var(--parchment)', border: '4px solid var(--ink)',
+                  padding: '2rem', boxShadow: '8px 8px 0 var(--crimson)', transform: `rotate(${i % 2 === 0 ? 1 : -1}deg)`
+                }}>
+                  <p style={{
+                    fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontSize: '1.1rem', margin: 0, fontWeight: 700
+                  }}>{text}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Timeline */}
-      <section style={{ paddingTop: '4rem', paddingBottom: '5rem' }}>
-        <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail">
-              <p className="rail-label">Section 4</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>Timeline</p>
-            </aside>
-            <div className="op-main">
-              <div className="section-marker--gold section-marker">
-                <span>Timeline</span>
-              </div>
-              <h2 style={{ marginBottom: '2rem' }}>Milestones</h2>
-              <div style={{ position: 'relative' }}>
-                {milestones.map(({ year, text }, i) => (
-                  <div
-                    key={year}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '4rem 1fr',
-                      gap: '1.5rem',
-                      paddingBottom: i < milestones.length - 1 ? '2rem' : 0,
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Year */}
-                    <div style={{ paddingTop: '0.15rem' }}>
-                      <p
-                        style={{
-                          fontFamily: 'var(--font-sans)',
-                          fontVariantNumeric: 'tabular-nums',
-                          fontSize: '0.875rem',
-                          color: 'var(--color-red)',
-                          fontWeight: 600,
-                          margin: 0,
-                        }}
-                      >
-                        {year}
-                      </p>
-                    </div>
-                    {/* Content */}
-                    <div>
-                      <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-chalk)', lineHeight: 1.65, margin: 0 }}>
-                        {text}
-                      </p>
-                      {i < milestones.length - 1 && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            left: '1.85rem',
-                            top: '1.4rem',
-                            bottom: 0,
-                            width: '1px',
-                            backgroundColor: 'var(--color-rule)',
-                          }}
-                          aria-hidden="true"
-                        />
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <style>{`
+        @media (max-width: 767px) {
+          .about-story-grid { grid-template-columns: 1fr !important; }
+          .about-story-grid > div:first-child { height: 400px !important; }
+          .values-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </>
   );
 }

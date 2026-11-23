@@ -1,615 +1,449 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import { SITE, STATS } from '../theme';
-import { events } from '../data/events';
+import { useState, useCallback } from 'react';
+import { galleryImages, LightboxModal, GalleryCard } from './Gallery';
 
-const nextEvent = events
-  .filter(e => e.status === 'upcoming')
-  .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
-
-// Animated counter hook — counts from 0 to end when element scrolls into view
-function useCountUp(end, duration = 1800) {
-  const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const hasAnimated = useRef(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated.current) {
-          hasAnimated.current = true;
-          const start = performance.now();
-          const step = (now) => {
-            const progress = Math.min((now - start) / duration, 1);
-            // Ease-out cubic
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setCount(Math.round(eased * end));
-            if (progress < 1) requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [end, duration]);
-
-  return { count, ref };
-}
-
-function StatCounter({ stat }) {
-  const { count, ref } = useCountUp(stat.numericEnd);
-  const suffix = stat.value.replace(/\d+/, '');
-
+/* ── Floating decoration element ─────────────────────────────── */
+function FloatingEl({ src, alt, style, className, yTransform }) {
   return (
-    <div ref={ref} style={{ padding: '1rem 0' }}>
-      <p
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(2.75rem, 5vw, 4rem)',
-          fontWeight: 500,
-          letterSpacing: '-0.04em',
-          color: '#FCFCFA',
-          lineHeight: 1,
-          margin: '0 0 0.5rem 0',
-        }}
-      >
-        {count}{suffix}
-      </p>
-      <p
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '0.8125rem',
-          color: 'rgba(252,252,250,0.5)',
-          margin: 0,
-          fontWeight: 500,
-          letterSpacing: '0.02em',
-        }}
-      >
-        {stat.label}
-      </p>
-    </div>
+    <motion.div
+      className={`float-lotus ${className || ''}`}
+      style={{
+        position: 'absolute',
+        pointerEvents: 'none',
+        zIndex: 0,
+        y: yTransform || 0,
+        ...style,
+      }}
+      aria-hidden="true"
+    >
+      <img src={src} alt={alt || ''} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+    </motion.div>
   );
 }
 
-// Debate chamber line-art SVG elements for parallax hero background
-function HeroIllustration() {
+/* ── Collage stamp card ───────────────────────────────────────── */
+function StampCard({ src, alt, rotate = 0, style, caption, yTransform }) {
   return (
-    <>
-      {/* Layer 1 — slower parallax: faint order-paper silhouettes */}
-      <div
-        className="parallax-layer hero-drift"
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          opacity: 0.06,
-          pointerEvents: 'none',
-        }}
-      >
-        <svg width="100%" height="100%" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-          {/* Document silhouettes */}
-          <rect x="80" y="60" width="120" height="160" rx="2" stroke="#D8D2C4" strokeWidth="0.8" transform="rotate(-8 140 140)" />
-          <line x1="100" y1="100" x2="180" y2="100" stroke="#D8D2C4" strokeWidth="0.5" transform="rotate(-8 140 140)" />
-          <line x1="100" y1="115" x2="170" y2="115" stroke="#D8D2C4" strokeWidth="0.5" transform="rotate(-8 140 140)" />
-          <line x1="100" y1="130" x2="160" y2="130" stroke="#D8D2C4" strokeWidth="0.5" transform="rotate(-8 140 140)" />
-
-          <rect x="600" y="100" width="110" height="150" rx="2" stroke="#D8D2C4" strokeWidth="0.8" transform="rotate(6 655 175)" />
-          <line x1="618" y1="135" x2="693" y2="135" stroke="#D8D2C4" strokeWidth="0.5" transform="rotate(6 655 175)" />
-          <line x1="618" y1="150" x2="685" y2="150" stroke="#D8D2C4" strokeWidth="0.5" transform="rotate(6 655 175)" />
-
-          <rect x="350" y="380" width="100" height="140" rx="2" stroke="#D8D2C4" strokeWidth="0.8" transform="rotate(-3 400 450)" />
-        </svg>
-      </div>
-
-      {/* Layer 2 — slightly faster: gavel + quill shapes */}
-      <div
-        className="parallax-layer"
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          opacity: 0.045,
-          pointerEvents: 'none',
-          animation: 'driftSlow 30s ease-in-out infinite alternate',
-        }}
-      >
-        <svg width="100%" height="100%" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-          {/* Gavel shape */}
-          <g transform="translate(180, 350) rotate(-25)">
-            <rect x="0" y="0" width="60" height="18" rx="3" stroke="#D8D2C4" strokeWidth="0.8" />
-            <line x1="30" y1="18" x2="30" y2="80" stroke="#D8D2C4" strokeWidth="0.8" />
-            <ellipse cx="30" cy="85" rx="8" ry="5" stroke="#D8D2C4" strokeWidth="0.6" />
-          </g>
-
-          {/* Quill shape */}
-          <g transform="translate(620, 380) rotate(15)">
-            <path d="M0 60 Q5 30 2 0 Q8 25 15 55 Z" stroke="#D8D2C4" strokeWidth="0.6" fill="none" />
-            <line x1="7" y1="55" x2="7" y2="90" stroke="#D8D2C4" strokeWidth="0.5" />
-          </g>
-
-          {/* Scales of justice hint */}
-          <g transform="translate(420, 80)">
-            <line x1="0" y1="0" x2="0" y2="50" stroke="#D8D2C4" strokeWidth="0.7" />
-            <line x1="-30" y1="10" x2="30" y2="10" stroke="#D8D2C4" strokeWidth="0.7" />
-            <path d="M-30 10 L-25 30 L-35 30 Z" stroke="#D8D2C4" strokeWidth="0.5" fill="none" />
-            <path d="M30 10 L35 30 L25 30 Z" stroke="#D8D2C4" strokeWidth="0.5" fill="none" />
-          </g>
-        </svg>
-      </div>
-
-      <style>{`
-        @keyframes driftSlow {
-          from { transform: translate(0, 0); }
-          to   { transform: translate(8px, -6px); }
-        }
-        @media (max-width: 768px) {
-          .parallax-layer { display: none !important; }
-        }
-      `}</style>
-    </>
+    <motion.div
+      className="stamp-border"
+      style={{
+        transform: `rotate(${rotate}deg)`,
+        overflow: 'hidden',
+        display: 'inline-block',
+        transition: 'box-shadow 0.3s ease',
+        y: yTransform || 0,
+        ...style,
+      }}
+      whileHover={{ scale: 1.05, rotate: rotate * 0.3, zIndex: 10 }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+        loading="lazy"
+      />
+      {caption && (
+        <div style={{
+          background: 'var(--crimson)', color: 'var(--gold)',
+          fontFamily: 'var(--font-masthead)', fontSize: '1rem',
+          letterSpacing: '0.12em', padding: '0.4rem 0.6rem', textAlign: 'center',
+        }}>
+          {caption}
+        </div>
+      )}
+    </motion.div>
   );
 }
 
+/* ── Page ────────────────────────────────────────────────────── */
 export default function Home() {
-  document.title = 'Somaiya Debating Society';
+  document.title = 'Somaiya Debating Society - SPEAK UP';
+  const { scrollYProgress } = useScroll();
+
+  // Mouse tracking state for hero
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { damping: 50, stiffness: 400 });
+  const springY = useSpring(mouseY, { damping: 50, stiffness: 400 });
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  };
+
+  // Parallax mappings
+  const ySlow = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const yFast = useTransform(scrollYProgress, [0, 1], [0, -300]);
+  const yReverse = useTransform(scrollYProgress, [0, 1], [0, 150]);
+  const rotateScroll = useTransform(scrollYProgress, [0, 1], [0, 45]);
+
+  // Gallery state
+  const [activeIndex, setActiveIndex] = useState(null);
+  const openImage = useCallback((i) => setActiveIndex(i), []);
+  const closeImage = useCallback(() => setActiveIndex(null), []);
+  const prevImage = useCallback(() => setActiveIndex(i => Math.max(0, i - 1)), []);
+  const nextImage = useCallback(() => setActiveIndex(i => Math.min(galleryImages.length - 1, i + 1)), []);
 
   return (
     <>
-      {/* =====================================================
-          HERO — Dark, centered, logo-forward, with chamber illustration
-          ===================================================== */}
+      {/* ===================================================
+          HERO — Maximalist collage / stamp composition
+          =================================================== */}
       <section
-        className="section-dark"
+        onMouseMove={handleMouseMove}
         style={{
-          paddingTop: '6rem',
-          paddingBottom: '6.5rem',
+          background: 'var(--ink)',
           position: 'relative',
           overflow: 'hidden',
+          minHeight: '90vh',
+          display: 'flex',
+          alignItems: 'center',
+          paddingTop: '5rem',
+          paddingBottom: '6rem',
+          textAlign: 'center',
         }}
+        className="bg-dense-pattern"
         aria-label="Hero"
       >
-        {/* Subtle radial glow behind logo */}
-        <div
-          aria-hidden="true"
+        {/* Interactive cursor glow */}
+        <motion.div style={{
+          position: 'absolute',
+          left: springX,
+          top: springY,
+          x: '-50%',
+          y: '-50%',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(224,120,32,0.15) 0%, transparent 60%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+          borderRadius: '50%'
+        }} />
+
+        {/* Tile border at top */}
+        <motion.div className="bg-tile" style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: '40px', opacity: 0.8, y: ySlow
+        }} />
+
+        {/* Diagonal stripe accent */}
+        <motion.div aria-hidden="true" style={{
+          position: 'absolute', top: 0, right: 0, width: '55%', height: '150%',
+          background: 'linear-gradient(to bottom left, rgba(224,120,32,0.2) 0%, transparent 60%)',
+          pointerEvents: 'none', y: yReverse
+        }} />
+
+        {/* Floating elements */}
+        <FloatingEl
+          src="/images/vintage_gramophone.png"
+          yTransform={yFast}
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -60%)',
-            width: 'min(600px, 150vw)',
-            height: 'min(600px, 150vw)',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(158,27,50,0.18) 0%, transparent 70%)',
-            pointerEvents: 'none',
+            left: '-80px', top: '20%', width: '320px', height: '400px', opacity: 0.65,
+            filter: 'drop-shadow(0 0 30px rgba(212,96,122,0.3))',
           }}
         />
 
-        {/* Decorative hairline grid lines */}
-        <div
-          aria-hidden="true"
+        <FloatingEl
+          src="/images/indian_peacock_vintage.png"
+          yTransform={ySlow}
           style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'linear-gradient(rgba(216,210,196,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(216,210,196,0.06) 1px, transparent 1px)',
-            backgroundSize: '48px 48px',
-            pointerEvents: 'none',
+            right: '-30px', bottom: '-40px', width: '280px', height: '350px', opacity: 0.4,
+            filter: 'drop-shadow(0 0 20px rgba(224,120,32,0.4))',
           }}
         />
 
-        {/* Chamber illustration layers */}
-        <HeroIllustration />
-
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            {/* Logo */}
-            <div
-              className="op-rail--animate"
-              style={{
-                marginBottom: '2.5rem',
-                position: 'relative',
-              }}
-            >
-              {/* Glow ring behind logo */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  inset: '-12px',
-                  borderRadius: '50%',
-                  border: '1px solid rgba(158,27,50,0.4)',
-                  animation: 'pulseRing 3s ease-in-out infinite',
-                }}
-              />
-              <img
-                src="/logo.png"
-                alt="Somaiya Debating Society logo"
-                style={{
-                  width: '110px',
-                  height: '110px',
-                  objectFit: 'cover',
-                  display: 'block',
-                  position: 'relative',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 0 3px rgba(158,27,50,0.5), 0 0 32px rgba(158,27,50,0.3)',
-                }}
-              />
+        <div className="container" style={{ position: 'relative', zIndex: 2, width: '100%' }}>
+          <motion.div style={{ y: yReverse, maxWidth: '900px', margin: '0 auto' }}>
+            {/* Eyebrow stamp label */}
+            <div style={{
+              display: 'inline-flex', background: 'var(--saffron)', color: 'var(--ink)',
+              fontFamily: 'var(--font-masthead)', fontSize: '1.2rem',
+              letterSpacing: '0.14em', padding: '0.35rem 1rem', marginBottom: '2rem',
+              border: '3px solid var(--parchment)', boxShadow: '4px 4px 0 var(--crimson)',
+              transform: 'rotate(-2deg)'
+            }}>
+              ✦ Est. {SITE.established} · {SITE.session}
             </div>
 
-            {/* Session label */}
-            <p
-              className="rail-label"
-              style={{
-                color: 'var(--color-red)',
-                marginBottom: '1.5rem',
-                letterSpacing: '0.08em',
-                fontSize: '0.8rem',
-                textTransform: 'uppercase',
-                fontWeight: 600,
-              }}
-            >
-              Session {SITE.session} &nbsp;&bull;&nbsp; Est. {SITE.established}
-            </p>
-
-            {/* Heading — pushed larger, tight leading */}
+            {/* Masthead */}
             <h1
+              className="glitch-text"
+              data-text="SOMAIYA"
               style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(2.5rem, 9vw, 6.5rem)',
-                letterSpacing: '-0.045em',
-                marginBottom: '1.5rem',
-                lineHeight: 1.0,
-                maxWidth: '14ch',
+                fontFamily: 'var(--font-masthead)', fontSize: 'clamp(5rem, 15vw, 12rem)',
+                color: 'var(--parchment)', lineHeight: 0.85, marginBottom: '0.25rem',
+                textShadow: '6px 6px 0px rgba(139,0,0,0.8), 12px 12px 0px rgba(224,120,32,0.5)',
+                margin: '0 auto'
               }}
             >
-              Somaiya{' '}
-              <span style={{ color: 'var(--color-red)' }}>Debating</span>{' '}
-              Society
+              SOMAIYA
             </h1>
+            <div style={{
+              fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3.5rem, 10vw, 7rem)',
+              color: 'var(--gold)', lineHeight: 0.9, marginBottom: '0.5rem',
+              textShadow: '4px 4px 0px rgba(90,0,0,0.8)',
+            }}>
+              DEBATING
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 9vw, 6rem)',
+              color: 'var(--saffron)', lineHeight: 0.9, marginBottom: '2.5rem',
+              textShadow: '3px 3px 0px var(--crimson-dark)',
+            }}>
+              SOCIETY
+            </div>
 
-            {/* Red rule */}
-            <div
-              aria-hidden="true"
-              style={{
-                width: '48px',
-                height: '3px',
-                backgroundColor: 'var(--color-red)',
-                margin: '0 auto 1.75rem',
-              }}
-            />
-
-            {/* Tagline */}
-            <p
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-                color: 'rgba(252,252,250,0.68)',
-                maxWidth: '52ch',
-                lineHeight: 1.7,
-                marginBottom: '3rem',
-              }}
-            >
+            <p style={{
+              fontFamily: 'var(--font-sans)', fontSize: '1.2rem', color: 'var(--parchment)',
+              background: 'var(--ink)', padding: '1.25rem', border: '2px solid var(--saffron)',
+              maxWidth: '50ch', lineHeight: 1.6, margin: '0 auto 2.5rem',
+              boxShadow: '4px 4px 0 var(--saffron)'
+            }}>
               {SITE.tagline}
             </p>
 
-            {/* CTAs — pill shape */}
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Link to="/events" className="btn-pill-light" id="hero-events-btn">
-                Upcoming Events
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/gallery" className="btn-pill-light" id="hero-gallery-btn">
+                Gallery
               </Link>
-              <Link to="/about" className="btn-ghost-light" id="hero-about-btn">
-                About the Society
+              <Link to="/about" className="btn-primary" id="hero-about-btn">
+                Story
               </Link>
             </div>
-
-            {/* Institution tag */}
-            <p
-              className="rail-label"
-              style={{
-                color: 'rgba(107,101,88,0.7)',
-                marginTop: '3rem',
-                fontSize: '0.75rem',
-                letterSpacing: '0.04em',
-              }}
-            >
-              K.J. Somaiya College of Engineering &bull; Vidyavihar, Mumbai
-            </p>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* =====================================================
-          QUICK STATS — Dark Ink band, animated counters
-          ===================================================== */}
+      {/* ===================================================
+          STATS — Newspaper band
+          =================================================== */}
       <section
-        className="section-dark"
-        style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem', borderTop: '1px solid rgba(252,252,250,0.06)' }}
-        aria-label="Society statistics"
+        style={{
+          paddingTop: '6rem', paddingBottom: '6rem', position: 'relative', overflow: 'hidden',
+          borderTop: '8px solid var(--saffron)', borderBottom: '8px solid var(--crimson)',
+        }}
+        className="section-paper"
       >
-        <div className="container">
-          <div className="section-marker" style={{ justifyContent: 'center' }}>
-            <span style={{ color: 'rgba(252,252,250,0.45)' }}>By the numbers</span>
-          </div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '1.5rem',
-              textAlign: 'center',
-            }}
-            className="stats-grid"
-          >
-            {STATS.map((stat) => (
-              <StatCounter key={stat.label} stat={stat} />
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem' }} className="stats-grid">
+            {STATS.map((stat, i) => (
+              <motion.div key={i} style={{
+                background: 'var(--ink)', border: '4px solid var(--parchment)', padding: '2rem 1rem',
+                textAlign: 'center', boxShadow: '8px 8px 0 var(--crimson)',
+                y: i % 2 === 0 ? ySlow : yReverse,
+                rotate: i % 2 === 0 ? 3 : -2
+              }}>
+                <p style={{
+                  fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 6vw, 5rem)',
+                  color: 'var(--gold)', margin: '0 0 0.5rem 0', textShadow: '3px 3px 0 var(--crimson)'
+                }}>
+                  {stat.value}
+                </p>
+                <p style={{
+                  fontFamily: 'var(--font-sans)', fontSize: '1rem', color: 'var(--parchment)',
+                  margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em'
+                }}>
+                  {stat.label}
+                </p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          UPCOMING EVENT HIGHLIGHT — glass card on warm bg
-          ===================================================== */}
-      {nextEvent && (
-        <section
-          className="section-warm"
-          style={{ paddingTop: '4.5rem', paddingBottom: '4.5rem' }}
-          aria-label="Next upcoming event"
-        >
-          <div className="container">
-            {/* Section marker */}
-            <div className="section-marker" style={{ justifyContent: 'center' }}>
-              <span>Upcoming event</span>
-            </div>
-
-            {/* Event card — glass treatment */}
-            <div
-              className="glass"
-              style={{
-                maxWidth: '680px',
-                margin: '0 auto',
-                padding: 'clamp(1.5rem, 4vw, 2.5rem)',
-                position: 'relative',
-                borderRadius: '2px',
-              }}
-            >
-              {/* Left red accent bar */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '4px',
-                  backgroundColor: 'var(--color-red)',
-                  borderRadius: '2px 0 0 2px',
-                }}
-              />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                <div>
-                  <p className="motion-num" style={{ marginBottom: '0.4rem' }}>{nextEvent.id}</p>
-                  <h2
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 'clamp(1.35rem, 3vw, 1.9rem)',
-                      letterSpacing: '-0.03em',
-                      margin: 0,
-                      lineHeight: 1.15,
-                    }}
-                  >
-                    {nextEvent.name}
-                  </h2>
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--color-red)',
-                    backgroundColor: 'var(--color-red-muted)',
-                    padding: '0.3rem 0.7rem',
-                    border: '1px solid rgba(158,27,50,0.2)',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}
-                >
-                  {nextEvent.format}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>{nextEvent.dateLabel}</p>
-                <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>{nextEvent.venue}</p>
-              </div>
-
-              <p
-                style={{
-                  fontFamily: 'var(--font-sans)',
-                  color: 'var(--color-chalk)',
-                  fontSize: '0.9375rem',
-                  lineHeight: 1.65,
-                  marginBottom: '1.75rem',
-                }}
-              >
-                {nextEvent.description}
-              </p>
-
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <a
-                  href={nextEvent.registerUrl}
-                  className="btn-pill"
-                  id={`register-${nextEvent.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Register
-                </a>
-                <Link
-                  to="/events"
-                  style={{
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: '0.875rem',
-                    color: 'var(--color-chalk)',
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '3px',
-                  }}
-                >
-                  All events
-                </Link>
-              </div>
-            </div>
+      {/* ===================================================
+          SCROLLING GALLERY SNIPPET
+          =================================================== */}
+      <section style={{
+        backgroundColor: 'var(--cream)',
+        paddingTop: '4rem', paddingBottom: '4rem', position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
+            <h2 style={{
+              fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 6vw, 5rem)',
+              color: 'var(--ink)', margin: 0, textShadow: '3px 3px 0 var(--parchment)',
+              background: 'var(--parchment)', padding: '0.5rem 1.5rem', display: 'inline-block', border: '4px solid var(--ink)', transform: 'rotate(-2deg)', boxShadow: '8px 8px 0 var(--ink)'
+            }}>
+              MOMENTS IN TIME
+            </h2>
+            <Link to="/gallery" className="btn-secondary" style={{ background: 'var(--parchment)' }}>View All</Link>
           </div>
-        </section>
-      )}
-
-      {/* =====================================================
-          EXPLORE LINKS — white bg, centered, divider-separated
-          ===================================================== */}
-      <section
-        style={{ paddingTop: '4rem', paddingBottom: '4rem', borderBottom: '1px solid var(--color-rule)' }}
-        aria-label="Site navigation"
-      >
-        <div className="container">
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-            <div className="section-marker" style={{ justifyContent: 'center' }}>
-              <span>Explore</span>
-            </div>
-            <nav aria-label="Explore the site">
-              {[
-                { to: '/about',     label: 'About the Society',      sub: 'History, mission, and values' },
-                { to: '/events',    label: 'Events and Tournaments',  sub: 'Upcoming competitions and past results' },
-                { to: '/resources', label: 'Motions Archive',         sub: 'BP, Asian, and WSDC motion database' },
-                { to: '/join',      label: 'Join the Society',        sub: 'Tryout process and registration' },
-              ].map(({ to, label, sub }, i, arr) => (
-                <div key={to}>
-                  <Link
-                    to={to}
-                    id={`explore-${to.replace('/', '')}`}
-                    className="explore-link"
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '1.2rem 0',
-                      textDecoration: 'none',
-                      color: 'var(--color-ink)',
-                      gap: '1rem',
-                      transition: 'color 0.15s ease',
-                    }}
-                  >
-                    <div>
-                      <p
-                        style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: 'clamp(1rem, 2.5vw, 1.3rem)',
-                          letterSpacing: '-0.02em',
-                          margin: '0 0 0.15rem 0',
-                        }}
-                      >
-                        {label}
-                      </p>
-                      <p className="rail-label" style={{ color: 'var(--color-chalk)' }}>{sub}</p>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '1.1rem',
-                        color: 'var(--color-rule)',
-                        flexShrink: 0,
-                        fontFamily: 'var(--font-sans)',
-                        transition: 'color 0.15s ease',
-                      }}
-                      aria-hidden="true"
-                    >
-                      /
-                    </span>
-                  </Link>
-                  {i < arr.length - 1 && <hr className="rule" style={{ margin: 0 }} />}
-                </div>
-              ))}
-            </nav>
+        </div>
+          
+        <div style={{ width: '100%', overflow: 'hidden' }}>
+          <div className="scrolling-carousel" style={{ display: 'flex', width: 'max-content' }}>
+            {[...galleryImages, ...galleryImages].map((img, i) => (
+              <div key={i} style={{ minWidth: '300px', flexShrink: 0 }}>
+                <GalleryCard img={img} index={i % galleryImages.length} onClick={openImage} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* =====================================================
-          FOOTER CTA — dark band
-          ===================================================== */}
+      {/* Lightbox Modal */}
+      {activeIndex !== null && (
+        <LightboxModal
+          image={galleryImages[activeIndex]}
+          index={activeIndex}
+          total={galleryImages.length}
+          onClose={closeImage}
+          onPrev={prevImage}
+          onNext={nextImage}
+          hasPrev={activeIndex > 0}
+          hasNext={activeIndex < galleryImages.length - 1}
+        />
+      )}
+
+      {/* ===================================================
+          WHO WE ARE - Intricate architecture borders
+          =================================================== */}
+      <section style={{
+        background: 'var(--ink)', paddingTop: '8rem', paddingBottom: '8rem',
+        position: 'relative', overflow: 'hidden',
+      }} className="bg-dense-pattern">
+        
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'center',
+          }} className="identity-grid">
+
+            {/* Left: Collage */}
+            <motion.div style={{ position: 'relative', height: '500px', y: ySlow }}>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, width: '70%', height: '400px',
+                transform: 'rotate(-4deg)', border: '6px solid var(--parchment)',
+                boxShadow: '12px 12px 0 var(--crimson), 20px 20px 40px rgba(0,0,0,0.6)',
+                overflow: 'hidden', background: 'var(--ink)'
+              }}>
+                <img src="/images/tiger_element.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <motion.div style={{
+                position: 'absolute', bottom: '0', right: '0', width: '60%', height: '300px',
+                transform: 'rotate(5deg)', border: '6px solid var(--parchment)',
+                boxShadow: '10px 10px 0 var(--gold)', overflow: 'hidden', background: 'var(--crimson)',
+                y: yFast
+              }}>
+                <img src="/images/indian_tile_pattern.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </motion.div>
+            </motion.div>
+
+            {/* Right: Text */}
+            <motion.div style={{ y: yReverse }}>
+              <div style={{
+                background: 'var(--saffron)', color: 'var(--ink)', fontFamily: 'var(--font-masthead)',
+                fontSize: '1.5rem', display: 'inline-block', padding: '0.4rem 1.5rem', border: '3px solid var(--ink)',
+                transform: 'rotate(-2deg)', marginBottom: '2rem', boxShadow: '4px 4px 0 var(--parchment)'
+              }}>
+                WHO WE ARE
+              </div>
+              
+              <h2 style={{
+                fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 6vw, 5rem)',
+                color: 'var(--parchment)', marginBottom: '1.5rem', lineHeight: 0.9, textShadow: '3px 3px 0 var(--crimson)'
+              }}>
+                WHERE WORDS<br/>BECOME <span style={{ color: 'var(--gold)' }}>WEAPONS</span>
+              </h2>
+
+              <div style={{
+                background: 'var(--parchment)', border: '4px solid var(--crimson)',
+                padding: '2rem', boxShadow: '8px 8px 0 var(--crimson)', transform: 'rotate(1deg)'
+              }}>
+                <p style={{
+                  fontFamily: 'var(--font-sans)', fontSize: '1.2rem', color: 'var(--ink)',
+                  lineHeight: 1.6, marginBottom: '1.5rem', fontWeight: 600
+                }}>
+                  Founded at K.J. Somaiya College of Engineering, we are a community of bold thinkers, fierce debaters, and passionate speakers.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <Link to="/about" className="btn-primary">Our Story</Link>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================
+          FULL-WIDTH TILE STRIP
+          =================================================== */}
+      <section style={{
+        height: '350px', background: 'var(--crimson)', borderTop: '8px solid var(--ink)', borderBottom: '8px solid var(--ink)',
+        position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
+        <div className="bg-tile" style={{ position: 'absolute', inset: 0, opacity: 0.6 }} />
+        <h2 style={{
+          fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 8vw, 7rem)', color: 'var(--parchment)',
+          background: 'var(--ink)', padding: '1rem 3rem', border: '6px solid var(--gold)',
+          boxShadow: '10px 10px 0 var(--gold)', textAlign: 'center', transform: 'rotate(-3deg)',
+          zIndex: 2, margin: 0
+        }}>
+          SPEAK - DEBATE - WIN
+        </h2>
+      </section>
+
+      {/* ===================================================
+          FOOTER CTA — Heavy Collage
+          =================================================== */}
       <section
-        className="section-dark"
-        style={{ paddingTop: '4.5rem', paddingBottom: '5rem', textAlign: 'center' }}
-        aria-label="Call to action"
+        style={{ paddingTop: '5rem', paddingBottom: '5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}
+        className="section-paper"
       >
-        <div className="container">
-          <img
-            src="/logo.png"
-            alt=""
-            aria-hidden="true"
-            style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '50%', margin: '0 auto 1.5rem', display: 'block', opacity: 0.9, boxShadow: '0 0 0 2px rgba(158,27,50,0.5)' }}
-          />
-          <h2
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(1.8rem, 4.5vw, 3rem)',
-              letterSpacing: '-0.03em',
-              margin: '0 auto 0.875rem',
-              maxWidth: '20ch',
-              lineHeight: 1.1,
-            }}
-          >
-            Ready to find your voice in the chamber?
-          </h2>
-          <p
-            style={{
-              fontFamily: 'var(--font-sans)',
-              color: 'rgba(252,252,250,0.6)',
-              fontSize: '1rem',
-              marginBottom: '2.5rem',
-              maxWidth: '40ch',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-            }}
-          >
-            Applications open at the start of every semester. Experience not required.
-          </p>
-          <Link to="/join" className="btn-pill" id="footer-cta-btn">
-            Apply to Join
-          </Link>
+        <motion.div style={{
+          position: 'absolute', left: '-50px', bottom: '0', width: '400px', height: '600px',
+          backgroundImage: 'url(/images/lotus_element.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.8, rotate: 15, y: yFast
+        }} />
+        <motion.div style={{
+          position: 'absolute', right: '-50px', top: '10%', width: '400px', height: '400px',
+          backgroundImage: 'url(/images/vintage_indian_bicycle.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.5, rotate: -15, y: yReverse
+        }} />
+
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <motion.div style={{
+            background: 'var(--ink)', border: '6px solid var(--saffron)', padding: '4rem 2rem',
+            maxWidth: '800px', margin: '0 auto', boxShadow: '15px 15px 0 var(--crimson)', rotate: 2
+          }}>
+            <h2 style={{
+              fontFamily: 'var(--font-masthead)', fontSize: 'clamp(3rem, 7vw, 6rem)', color: 'var(--parchment)',
+              margin: '0 auto 1.5rem', lineHeight: 0.9, textShadow: '4px 4px 0 var(--crimson)'
+            }}>
+              FIND YOUR VOICE
+            </h2>
+            <p style={{
+              fontFamily: 'var(--font-sans)', color: 'var(--gold)', fontSize: '1.25rem', marginBottom: '3rem', fontWeight: 600
+            }}>
+              "बोलो, बदलो, जीतो" <br/><br/>
+              Applications open every semester. Experience not required - just the hunger to speak and be heard.
+            </p>
+            <Link to="/join" className="btn-primary" style={{ fontSize: '1.5rem', padding: '1rem 3rem' }}>
+              JOIN THE SOCIETY ✦
+            </Link>
+          </motion.div>
         </div>
       </section>
 
       <style>{`
-        @keyframes pulseRing {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50%       { transform: scale(1.08); opacity: 1; }
+        @media (max-width: 767px) {
+          .hero-grid, .identity-grid { grid-template-columns: 1fr !important; gap: 3rem !important; }
+          .hero-grid > div:last-child { height: 320px !important; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
-
-        @media (max-width: 639px) {
-          .stats-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 1.25rem !important;
-          }
+        @keyframes scroll-left {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
-
-        @media (hover: hover) {
-          .explore-link:hover {
-            color: var(--color-red) !important;
-          }
-          .explore-link:hover span {
-            color: var(--color-red) !important;
-          }
+        .scrolling-carousel {
+          animation: scroll-left 30s linear infinite;
+          gap: 2.5rem;
+          padding: 1rem 2.5rem 3rem 2.5rem;
         }
       `}</style>
     </>

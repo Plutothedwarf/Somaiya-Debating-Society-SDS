@@ -1,285 +1,104 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { team, TIERS } from '../data/team';
-import { TIER_ACCENTS } from '../theme';
 
-// Deterministic avatar color from name
-function avatarColor(name) {
-  const colors = ['#9E1B32', '#A6813C', '#6B6558', '#171512', '#2C5FAA', '#6B4E9E'];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-}
-
-function initials(name) {
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-}
-
-// Get CSS variable value at runtime
-function getAccentColor(tierKey) {
-  const accent = TIER_ACCENTS[tierKey];
-  if (!accent) return { var: '--color-red', label: 'Team' };
-  return accent;
-}
-
-// Full detailed card for the Modal
-function MemberCard({ member }) {
-  const bg = avatarColor(member.name);
-  const accent = getAccentColor(member.tier);
-
-  return (
-    <article
-      style={{
-        padding: '2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: 'var(--color-paper)',
-        borderRadius: '16px',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-      className="member-card-modal"
-      aria-label={`${member.name}, ${member.role}`}
-    >
-      {/* Accent top border */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
-          background: `var(${accent.var})`,
-        }}
-      />
-
-      <div
-        style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '50%',
-          backgroundColor: bg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '1.25rem',
-          flexShrink: 0,
-          border: `2px solid var(${accent.var})`,
-        }}
-        aria-hidden="true"
-      >
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: '1.25rem', fontWeight: 600, color: '#FCFCFA', letterSpacing: '0.02em' }}>
-          {initials(member.name)}
-        </span>
-      </div>
-      <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: '0 0 0.25rem 0' }}>
-        {member.name}
-      </p>
-      <p className="rail-label" style={{ color: `var(${accent.var})`, marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-        {member.role}
-      </p>
-      {/* Department tag */}
-      <span
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          color: `var(${accent.var})`,
-          backgroundColor: `color-mix(in srgb, var(${accent.var}) 10%, transparent)`,
-          padding: '0.2rem 0.6rem',
-          borderRadius: '100px',
-          border: `1px solid color-mix(in srgb, var(${accent.var}) 25%, transparent)`,
-          display: 'inline-block',
-          marginBottom: '1rem',
-          width: 'fit-content',
-        }}
-      >
-        {accent.label}
-      </span>
-      <div style={{ width: '100%', height: '1px', backgroundColor: 'var(--color-rule)', marginBottom: '1rem' }} />
-      <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9375rem', color: 'var(--color-chalk)', lineHeight: 1.7, margin: 0 }}>
-        {member.bio}
-      </p>
-    </article>
-  );
-}
-
-// Compact card for the Kanban Board — glass nameplate
-function KanbanCard({ member, onClick, accentVar }) {
-  const isHead = member.isHead || member.tier === 'leadership';
-
-  return (
-    <button
-      className={`kanban-card ${isHead ? 'kanban-card-head' : ''}`}
-      onClick={onClick}
-      title={`Click to view ${member.name}'s bio`}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: isHead ? '0.65rem 0.6rem' : '0.45rem 0.5rem',
-        borderRadius: '8px',
-        backgroundColor: isHead ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${isHead ? `color-mix(in srgb, var(${accentVar}) 40%, transparent)` : 'rgba(255,255,255,0.05)'}`,
-        cursor: 'pointer',
-        transition: 'all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)',
-        width: '100%',
-        textAlign: 'left',
-        marginBottom: '0.35rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Accent left bar for heads */}
-      {isHead && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '3px', height: '100%',
-          backgroundColor: `var(${accentVar})`,
-          borderRadius: '3px 0 0 3px',
-        }} />
-      )}
-
-      <div
-        style={{
-          width: isHead ? '36px' : '28px',
-          height: isHead ? '36px' : '28px',
-          borderRadius: '50%',
-          backgroundColor: avatarColor(member.name),
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: '0.75rem',
-          marginLeft: isHead ? '6px' : '0',
-          flexShrink: 0,
-          border: isHead ? `2px solid var(${accentVar})` : '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        <span style={{ fontFamily: 'var(--font-sans)', fontSize: isHead ? '0.75rem' : '0.65rem', fontWeight: 600, color: '#FCFCFA' }}>
-          {initials(member.name)}
-        </span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <span style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: isHead ? '0.95rem' : '0.85rem',
-          fontWeight: isHead ? 600 : 500,
-          color: 'var(--color-ink)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
-          {member.name}
-        </span>
-        <span style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: '0.7rem',
-          color: isHead ? `var(${accentVar})` : 'var(--color-chalk)',
-          fontWeight: isHead ? 500 : 400,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
-          {member.role}
-        </span>
-      </div>
-    </button>
-  );
-}
-
-// Column for the Kanban Board — accent-colored top border
-function KanbanColumn({ tier, members, onMemberClick }) {
-  const sortedMembers = [...members].sort((a, b) => {
-    if (a.isHead && !b.isHead) return -1;
-    if (!a.isHead && b.isHead) return 1;
-    return 0;
-  });
-
-  const heads = sortedMembers.filter(m => m.isHead || tier.key === 'leadership');
-  const regulars = sortedMembers.filter(m => !m.isHead && tier.key !== 'leadership');
-  const accent = getAccentColor(tier.key);
+function TeamMemberCard({ member, onClick }) {
+  // Use a generated avatar based on the name or a placeholder stamp
+  const avatarUrl = member.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${member.name}&backgroundColor=8B0000,E07820,1A5C5C&textColor=F5ECD5`;
 
   return (
     <div
-      className="glass"
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${member.name}`}
+      onClick={() => onClick(member)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(member); }}
       style={{
-        width: '100%',
-        minWidth: '260px',
-        maxWidth: '300px',
-        flex: '1 1 260px',
-        borderTop: `4px solid var(${accent.var})`,
-        borderRadius: '12px',
-        padding: '1.25rem',
+        background: 'var(--parchment)',
+        border: '3px solid var(--ink)',
+        padding: '1.5rem',
+        cursor: 'pointer',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+      }}
+      className="team-card"
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-6px) rotate(-1deg)';
+        e.currentTarget.style.boxShadow = '8px 8px 0 var(--crimson), 16px 16px 30px rgba(0,0,0,0.1)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0) rotate(0deg)';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Column Header */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1.25rem',
-          color: 'var(--color-ink)',
-          margin: '0 0 0.35rem 0',
-          letterSpacing: '-0.02em',
-        }}>
-          {tier.label}
-        </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              color: `var(${accent.var})`,
-              background: `color-mix(in srgb, var(${accent.var}) 12%, transparent)`,
-              padding: '0.15rem 0.55rem',
-              borderRadius: '100px',
-              border: `1px solid color-mix(in srgb, var(${accent.var}) 20%, transparent)`,
-            }}
-          >
-            {members.length}
-          </span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', color: 'var(--color-chalk)' }}>
-            {accent.label}
-          </span>
-        </div>
+      {/* Small decorative corner tape */}
+      <div aria-hidden="true" style={{
+        position: 'absolute',
+        top: '-5px', right: '-5px',
+        width: '40px', height: '14px',
+        background: 'rgba(200,146,10,0.4)',
+        transform: 'rotate(45deg)',
+      }} />
+
+      <div style={{
+        width: '120px',
+        height: '120px',
+        borderRadius: '50%',
+        border: '4px solid var(--crimson)',
+        padding: '4px',
+        marginBottom: '1.25rem',
+        background: 'var(--parchment)',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+      }}>
+        <img
+          src={avatarUrl}
+          alt=""
+          style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+          loading="lazy"
+        />
       </div>
 
-      {/* Heads Section */}
-      {heads.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--color-chalk)', marginBottom: '0.5rem' }}>
-            {tier.key === 'leadership' ? 'Council' : `Department head${heads.length > 1 ? 's' : ''}`}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            {heads.map(member => (
-              <KanbanCard
-                key={member.id}
-                member={member}
-                accentVar={accent.var}
-                onClick={() => onMemberClick(member)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <h3 style={{
+        fontFamily: 'var(--font-masthead)',
+        fontSize: '1.8rem',
+        letterSpacing: '0.04em',
+        color: 'var(--ink)',
+        margin: '0 0 0.5rem 0',
+        lineHeight: 1,
+      }}>
+        {member.name}
+      </h3>
+      <p style={{
+        fontFamily: 'var(--font-sans)',
+        fontSize: '0.75rem',
+        fontWeight: 800,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: 'var(--crimson)',
+        margin: 0,
+      }}>
+        {member.role}
+      </p>
 
-      {/* Members Section */}
-      {regulars.length > 0 && (
-        <div>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.04em', color: 'var(--color-chalk)', marginBottom: '0.5rem' }}>
-            Members
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            {regulars.map(member => (
-              <KanbanCard
-                key={member.id}
-                member={member}
-                accentVar={accent.var}
-                onClick={() => onMemberClick(member)}
-              />
-            ))}
-          </div>
+      {/* Head Badge */}
+      {member.isHead && (
+        <div style={{
+          position: 'absolute',
+          top: '15px', left: '15px',
+          background: 'var(--gold)',
+          color: 'var(--ink)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: '0.6rem',
+          fontWeight: 800,
+          letterSpacing: '0.1em',
+          padding: '0.2rem 0.5rem',
+          transform: 'rotate(-5deg)',
+          boxShadow: '2px 2px 0 var(--crimson)',
+        }}>
+          HEAD
         </div>
       )}
     </div>
@@ -287,131 +106,273 @@ function KanbanColumn({ tier, members, onMemberClick }) {
 }
 
 export default function Team() {
-  useEffect(() => { document.title = 'Team \u2014 Somaiya Debating Society'; }, []);
+  useEffect(() => { document.title = 'Team — Somaiya Debating Society'; }, []);
 
   const [selectedMember, setSelectedMember] = useState(null);
 
+  // Close modal on escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') setSelectedMember(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = selectedMember ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [selectedMember]);
+
   return (
     <>
-      <section style={{ paddingTop: '3.5rem', paddingBottom: '1.5rem' }}>
-        <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail">
-              <p className="rail-label">Page</p>
-              <p className="rail-label" style={{ color: 'var(--color-ink)', marginTop: '0.25rem' }}>Team</p>
-            </aside>
-            <div className="op-main">
-              <div className="section-marker--gold section-marker">
-                <span>The committee</span>
-              </div>
-              <h1 style={{ marginBottom: '0.5rem' }}>The Committee</h1>
-              <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--color-chalk)', fontSize: '1.1rem' }}>
-                Meet the passionate individuals driving the Somaiya Debating Society.
-              </p>
-            </div>
+      {/* ── HERO SECTION ───────────────────────────────────── */}
+      <section style={{
+        background: 'linear-gradient(135deg, var(--saffron) 0%, #B55010 100%)',
+        paddingTop: '6rem',
+        paddingBottom: '5rem',
+        position: 'relative',
+        overflow: 'hidden',
+        textAlign: 'center',
+      }}>
+        {/* Decorative background stamps */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', left: '-5%', top: '-20%',
+          width: '400px', height: '400px',
+          backgroundImage: 'url(/images/hero_stamp.png)',
+          backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.15, transform: 'rotate(15deg)',
+          pointerEvents: 'none',
+        }} />
+        <div aria-hidden="true" style={{
+          position: 'absolute', right: '-5%', bottom: '-10%',
+          width: '350px', height: '350px',
+          backgroundImage: 'url(/images/tiger_element.png)',
+          backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
+          opacity: 0.15, transform: 'rotate(-10deg)',
+          pointerEvents: 'none',
+        }} />
+
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex',
+            background: 'var(--ink)',
+            color: 'var(--parchment)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            padding: '0.35rem 1.25rem',
+            marginBottom: '2rem',
+            boxShadow: '4px 4px 0 var(--crimson)',
+            transform: 'rotate(-2deg)',
+          }}>
+            ✦ Committee {new Date().getFullYear()} ✦
           </div>
+
+          <h1 style={{
+            fontFamily: 'var(--font-masthead)',
+            fontSize: 'clamp(3.5rem, 10vw, 8rem)',
+            fontWeight: 400,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: 'var(--ink)',
+            lineHeight: 0.9,
+            marginBottom: '1.5rem',
+            textShadow: '4px 4px 0 rgba(245,236,213,0.5)',
+          }}>
+            The Faces<br />Behind the <span style={{ color: 'var(--parchment)' }}>Noise</span>
+          </h1>
+          <p style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '1.1rem',
+            color: 'var(--ink)',
+            fontWeight: 500,
+            maxWidth: '50ch',
+            margin: '0 auto',
+            lineHeight: 1.6,
+          }}>
+            Meet the people who run the tournaments, design the workshops, and keep the society loud.
+          </p>
         </div>
       </section>
 
-      {/* FULL KANBAN BOARD */}
-      <section className="fade-in-section" style={{ paddingBottom: '5rem' }}>
-        <div className="container">
-          <div className="op-layout">
-            <aside className="op-rail" style={{ display: 'none' }}></aside>
+      {/* ── TEAM ROSTER ────────────────────────────────────── */}
+      <section style={{
+        background: 'var(--cream)',
+        paddingTop: '6rem',
+        paddingBottom: '6rem',
+        position: 'relative',
+      }}>
+        {/* Grain overlay */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'url(/images/stamp_bg_pattern.png)',
+          backgroundSize: '400px', opacity: 0.04, pointerEvents: 'none',
+        }} />
 
-            <div className="op-main" style={{ width: '100%', maxWidth: '100%', gridColumn: 'span 12' }}>
-              <div className="kanban-board" style={{
-                display: 'flex',
-                gap: '1.25rem',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}>
-                {TIERS.map(tier => {
-                  const membersInTier = team.filter(m => m.tier === tier.key);
-                  if (membersInTier.length === 0) return null;
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          {TIERS.map(tier => {
+            const members = team.filter(m => m.tier === tier.key);
+            if (members.length === 0) return null;
 
-                  return (
-                    <KanbanColumn
-                      key={tier.key}
-                      tier={tier}
-                      members={membersInTier}
-                      onMemberClick={setSelectedMember}
-                    />
-                  );
-                })}
+            return (
+              <div key={tier.key} style={{ marginBottom: '5rem' }}>
+                {/* Tier Heading */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.5rem',
+                  marginBottom: '2.5rem',
+                }}>
+                  <h2 style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 'clamp(2rem, 4vw, 3rem)',
+                    color: 'var(--ink)',
+                    margin: 0,
+                    letterSpacing: '-0.02em',
+                  }}>
+                    {tier.label}
+                  </h2>
+                  <div style={{ flex: 1, height: '2px', background: 'var(--crimson)' }} />
+                </div>
+
+                {/* Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                  gap: '2rem',
+                }}>
+                  {members.map(member => (
+                    <TeamMemberCard key={member.id} member={member} onClick={setSelectedMember} />
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* MODAL FOR MEMBER DETAILS */}
+      {/* ── MEMBER MODAL ───────────────────────────────────── */}
       {selectedMember && (
         <div
-          className="modal-overlay fade-in-section"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
           style={{
-            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-            backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, padding: '1.5rem',
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9000,
+            background: 'rgba(26,10,10,0.8)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
           }}
           onClick={() => setSelectedMember(null)}
-          aria-modal="true"
-          role="dialog"
         >
           <div
+            style={{
+              background: 'var(--parchment)',
+              width: '100%',
+              maxWidth: '500px',
+              border: '4px solid var(--crimson)',
+              boxShadow: '12px 12px 0 rgba(224,120,32,0.8), 0 20px 60px rgba(0,0,0,0.4)',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
             onClick={e => e.stopPropagation()}
-            style={{ maxWidth: '440px', width: '100%', position: 'relative' }}
+            className="fade-up"
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedMember(null)}
-              style={{
-                position: 'absolute', top: '1rem', right: '1rem',
-                background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%',
-                width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--color-ink)', cursor: 'pointer', zIndex: 10,
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={e => e.target.style.background = 'rgba(220, 53, 69, 0.8)'}
-              onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.1)'}
-              aria-label="Close"
-            >
-              &#10005;
-            </button>
+            {/* Modal Header */}
+            <div style={{
+              background: 'var(--crimson)',
+              padding: '1.5rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+            }}>
+              <div>
+                <h2 id="modal-title" style={{
+                  fontFamily: 'var(--font-masthead)',
+                  fontSize: '2.5rem',
+                  color: 'var(--parchment)',
+                  margin: '0 0 0.25rem 0',
+                  lineHeight: 1.1,
+                  letterSpacing: '0.04em',
+                }}>
+                  {selectedMember.name}
+                </h2>
+                <span style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'var(--gold)',
+                }}>
+                  {selectedMember.role}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedMember(null)}
+                aria-label="Close"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--parchment)',
+                  fontSize: '2rem',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >×</button>
+            </div>
 
-            <MemberCard member={selectedMember} />
+            {/* Modal Body */}
+            <div style={{ padding: '2rem' }}>
+              <div style={{
+                width: '100px', height: '100px',
+                borderRadius: '50%',
+                margin: '-4rem auto 1.5rem',
+                border: '4px solid var(--parchment)',
+                background: 'var(--crimson)',
+                position: 'relative',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              }}>
+                <img
+                  src={selectedMember.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${selectedMember.name}&backgroundColor=E07820&textColor=F5ECD5`}
+                  alt=""
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                />
+              </div>
+
+              <div style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: '1.05rem',
+                color: 'var(--ink)',
+                lineHeight: 1.6,
+                textAlign: 'center',
+                padding: '0 1rem',
+              }}>
+                <p style={{ margin: 0 }}>{selectedMember.bio}</p>
+              </div>
+
+              {/* Decorative bottom element */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginTop: '2rem',
+                opacity: 0.5,
+              }}>
+                <span style={{ fontFamily: 'var(--font-masthead)', color: 'var(--crimson)', fontSize: '1.5rem' }}>✦</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in-section {
-          animation: fadeIn 0.35s ease-out forwards;
-        }
-
-        /* Card Hover Effects — accent glow */
-        .kanban-card:hover {
-          background-color: rgba(255, 255, 255, 0.08) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .kanban-card-head:hover {
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 6px 20px rgba(0,0,0,0.2) !important;
-        }
-
-        /* Force op-main to take full width when showing the board */
-        .op-main {
-           grid-column: span 12 / span 12 !important;
-        }
-      `}</style>
     </>
   );
 }
